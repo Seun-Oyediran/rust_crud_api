@@ -4,7 +4,7 @@ mod models;
 mod repository;
 mod utils;
 
-use api::user_api::{create_user, delete_user, get_all_users, get_user, update_user};
+use api::{not_found::route_not_found, user_api::user_controller};
 use models::utils::ErrorResponse;
 use repository::mongo_repo::MongoRepo;
 use utils::helper::get_env_variable;
@@ -13,7 +13,7 @@ use utils::helper::get_env_variable;
 
 use actix_web::{
     error::InternalError,
-    get,
+    get, web,
     web::{Data, JsonConfig},
     App, HttpResponse, HttpServer, Responder,
 };
@@ -52,11 +52,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(config.clone())
             .app_data(db_data.clone())
-            .service(create_user)
-            .service(get_user)
-            .service(get_all_users)
-            .service(update_user)
-            .service(delete_user)
+            .service(web::scope("/api/v1").service(user_controller()))
+            .default_service(web::route().to(route_not_found))
     })
     .bind(("localhost", port.parse::<u16>().unwrap()))?
     .run()

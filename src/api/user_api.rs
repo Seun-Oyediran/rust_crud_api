@@ -9,14 +9,24 @@ use crate::{
 use actix_web::{
     delete, get, post, put,
     web::{Data, Json, Path},
-    HttpResponse,
+    HttpResponse, Scope,
 };
 // use actix_web_validator::Json;
 use mongodb::bson::oid::ObjectId;
 
+pub fn user_controller() -> Scope {
+    let user_controller = actix_web::web::scope("")
+        .service(create_user)
+        .service(get_user)
+        .service(get_all_users)
+        .service(update_user)
+        .service(delete_user);
+
+    user_controller
+}
+
 #[post("/user")]
-pub async fn create_user(db: Data<MongoRepo>, new_user: Json<User>) -> HttpResponse {
-  
+async fn create_user(db: Data<MongoRepo>, new_user: Json<User>) -> HttpResponse {
     let data = User {
         id: None,
         name: new_user.name.to_owned(),
@@ -34,7 +44,7 @@ pub async fn create_user(db: Data<MongoRepo>, new_user: Json<User>) -> HttpRespo
 }
 
 #[get("/user/{id}")]
-pub async fn get_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
+async fn get_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
     let id = path.into_inner();
     if id.is_empty() {
         return HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()));
@@ -48,7 +58,7 @@ pub async fn get_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
 }
 
 #[get("/user")]
-pub async fn get_all_users(db: Data<MongoRepo>) -> HttpResponse {
+async fn get_all_users(db: Data<MongoRepo>) -> HttpResponse {
     let data = db.get_all_users();
     match data {
         Ok(users) => HttpResponse::Ok().json(SuccessResponse::new(users, "User found".to_string())),
@@ -57,7 +67,7 @@ pub async fn get_all_users(db: Data<MongoRepo>) -> HttpResponse {
 }
 
 #[put("/user/{id}")]
-pub async fn update_user(
+async fn update_user(
     db: Data<MongoRepo>,
     path: Path<String>,
     new_user: Json<User>,
@@ -94,7 +104,7 @@ pub async fn update_user(
 }
 
 #[delete("/user/{id}")]
-pub async fn delete_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
+async fn delete_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
     let id = path.into_inner();
     if id.is_empty() {
         return HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()));

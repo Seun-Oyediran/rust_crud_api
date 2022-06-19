@@ -24,8 +24,6 @@ impl MongoRepo {
             Err(_) => Err(HttpResponse::InternalServerError()
                 .json(ErrorResponse::new("Server error".to_string()))),
         }
-
-    
     }
 
     pub fn get_user(&self, id: &String) -> Result<User, HttpResponse> {
