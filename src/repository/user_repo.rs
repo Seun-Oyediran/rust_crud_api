@@ -52,7 +52,11 @@ impl MongoRepo {
     }
 
     pub fn get_all_users(&self) -> Result<Vec<User>, HttpResponse> {
+        // let new_doc = doc! {
+        //      "$text": { "$search": "gunna POinter" } 
+        // };
         let users = self.user_col.find(None, None);
+        
         match users {
             Ok(data) => Ok(data.map(|doc| doc.unwrap()).collect()),
             Err(_) => Err(HttpResponse::InternalServerError()
