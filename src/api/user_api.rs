@@ -4,15 +4,13 @@ use crate::{
         utils::{ErrorResponse, SuccessResponse},
     },
     repository::mongo_repo::MongoRepo,
-    utils::helper::get_timestamp,
+    utils::helper::{get_timestamp, is_id_valid},
 };
 use actix_web::{
     delete, get, post, put,
     web::{Data, Json, Path},
     HttpResponse, Scope,
 };
-// use actix_web_validator::Json;
-use mongodb::bson::oid::ObjectId;
 
 pub fn user_controller() -> Scope {
     let user_controller = actix_web::web::scope("")
@@ -72,16 +70,9 @@ async fn update_user(
     path: Path<String>,
     new_user: Json<User>,
 ) -> HttpResponse {
-    let id = path.into_inner();
-    if id.is_empty() {
-        return HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()));
-    }
-
-    let obj_id = match ObjectId::parse_str(&id) {
+    let obj_id = match is_id_valid(path.into_inner()) {
         Ok(data) => data,
-        Err(_) => {
-            return HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()))
-        }
+        Err(err) => return err,
     };
 
     let data = User {
@@ -105,12 +96,12 @@ async fn update_user(
 
 #[delete("/user/{id}")]
 async fn delete_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
-    let id = path.into_inner();
-    if id.is_empty() {
-        return HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()));
-    }
+    let obj_id = match is_id_valid(path.into_inner()) {
+        Ok(data) => data,
+        Err(err) => return err,
+    };
 
-    let ans = db.delete_user(&id);
+    let ans = db.delete_user(obj_id);
     match ans {
         Ok(users) => HttpResponse::Ok().json(SuccessResponse::new(
             users,

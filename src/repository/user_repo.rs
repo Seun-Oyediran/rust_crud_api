@@ -86,17 +86,8 @@ impl MongoRepo {
         }
     }
 
-    pub fn delete_user(&self, id: &String) -> Result<(), HttpResponse> {
-        let obj_id = match ObjectId::parse_str(&id) {
-            Ok(data) => data,
-            Err(_) => {
-                return Err(
-                    HttpResponse::BadRequest().json(ErrorResponse::new("Invalid id".to_string()))
-                )
-            }
-        };
-
-        let filter = doc! {"_id": obj_id};
+    pub fn delete_user(&self, id: ObjectId) -> Result<(), HttpResponse> {
+        let filter = doc! {"_id": id};
 
         let result = self.user_col.find_one_and_delete(filter, None);
         match result {
